@@ -1,4 +1,28 @@
-steps:
+name: Build and Publish Docker Image
+
+on:
+  # 开启手动触发面板
+  workflow_dispatch:
+  
+  # 如果以后需要自动触发，把下面这些行的注释（#）去掉即可
+  # push:
+  #   branches: [ "main" ]
+  #   tags: [ 'v*.*.*' ]
+  # pull_request:
+  #   branches: [ "main" ]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build-and-push-image:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -11,7 +35,7 @@ steps:
 
       - name: Extract metadata (tags, labels) for Docker
         uses: docker/metadata-action@v5
-        id: meta # 👈 加上这一行！非常关键
+        id: meta
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
 
@@ -19,6 +43,7 @@ steps:
         uses: docker/build-push-action@v5
         with:
           context: .
-          push: ${{ github.event_name != 'pull_request' }}
+          # 手动触发时固定执行推送
+          push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
